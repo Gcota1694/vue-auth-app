@@ -34,13 +34,14 @@
             Ir al Dashboard →
           </RouterLink>
 
+          <a
             href="https://router.vuejs.org"
             target="_blank"
             rel="noopener"
             class="btn btn--ghost"
           >
             Ver documentación ↗
-
+          </a>
         </div>
       </div>
 
@@ -102,7 +103,7 @@
     <section class="cta-section">
       <h2 class="cta-title">¿Listo para practicar?</h2>
       <p class="cta-sub">
-        Inicia sesión con las credenciales de prueba y explora
+        Inicia sesión o crea una cuenta nueva para explorar
         la protección de rutas en acción.
       </p>
       <RouterLink v-if="!isAuthenticated" to="/login" class="btn btn--primary btn--lg">
@@ -118,7 +119,7 @@
 
 <script setup>
 import { RouterLink } from 'vue-router'
-import { useAuth } from '@/composables/useAuth'
+import { useAuth } from '@/stores/auth'
 
 const { isAuthenticated } = useAuth()
 
@@ -138,14 +139,14 @@ const features = [
   {
     icon: '⚡',
     title: 'Estado global',
-    desc: 'useAuth() comparte el estado de sesión entre todos los componentes.',
-    tag: 'useAuth.js',
+    desc: 'Pinia comparte el estado de sesión entre todos los componentes.',
+    tag: 'stores/auth.js',
   },
   {
-    icon: '💾',
-    title: 'Persistencia',
-    desc: 'El token se guarda en localStorage para mantener la sesión activa.',
-    tag: 'composable',
+    icon: '☁️',
+    title: 'Supabase Auth',
+    desc: 'Autenticación real con email/password gestionada desde la nube.',
+    tag: 'supabase.js',
   },
 ]
 
@@ -182,7 +183,6 @@ const flowSteps = [
   .hero-visual { display: none; }
 }
 
-/* Fondo decorativo */
 .hero-bg {
   position: absolute;
   inset: 0;
@@ -225,7 +225,6 @@ const flowSteps = [
   background-size: 40px 40px;
 }
 
-/* Contenido hero */
 .hero-content {
   position: relative;
   z-index: 1;
@@ -290,7 +289,6 @@ const flowSteps = [
   flex-wrap: wrap;
 }
 
-/* Botones */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -329,7 +327,6 @@ const flowSteps = [
 
 .btn--lg { padding: 0.85rem 2rem; font-size: 1rem; }
 
-/* Tarjeta de código */
 .hero-visual {
   position: relative;
   z-index: 1;
@@ -378,7 +375,6 @@ const flowSteps = [
   overflow-x: auto;
 }
 
-/* Syntax highlight manual */
 .t-comment { color: #4a4a5a; }
 .t-keyword  { color: #6eb4e8; }
 .t-fn       { color: #c8a96e; }
@@ -465,6 +461,7 @@ const flowSteps = [
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  position: relative;
 }
 
 .flow-node {
@@ -486,8 +483,6 @@ const flowSteps = [
   position: absolute;
   margin-top: 72px;
 }
-
-.flow-item { position: relative; }
 
 .flow-arrow {
   color: #3a3530;

@@ -9,8 +9,26 @@
       <!-- Encabezado -->
       <div class="card-header">
         <span class="card-icon">⬡</span>
-        <h1 class="card-title">Bienvenido</h1>
-        <p class="card-subtitle">Ingresa tus credenciales para continuar</p>
+        <h1 class="card-title">{{ isRegister ? 'Crear cuenta' : 'Bienvenido' }}</h1>
+        <p class="card-subtitle">
+          {{ isRegister ? 'Completa los datos para registrarte' : 'Ingresa tus credenciales para continuar' }}
+        </p>
+      </div>
+
+      <!-- Toggle Login / Registro -->
+      <div class="mode-toggle">
+        <button
+          type="button"
+          class="mode-btn"
+          :class="{ 'mode-btn--active': !isRegister }"
+          @click="switchMode(false)"
+        >Iniciar sesión</button>
+        <button
+          type="button"
+          class="mode-btn"
+          :class="{ 'mode-btn--active': isRegister }"
+          @click="switchMode(true)"
+        >Registrarse</button>
       </div>
 
       <!-- Alerta de error -->
@@ -20,8 +38,15 @@
         </div>
       </Transition>
 
+      <!-- Alerta de éxito (registro) -->
+      <Transition name="alert">
+        <div v-if="successMsg" class="alert-success" role="status">
+          <span>✓</span> {{ successMsg }}
+        </div>
+      </Transition>
+
       <!-- Formulario -->
-      <form class="login-form" @submit.prevent="handleLogin" novalidate>
+      <form class="login-form" @submit.prevent="handleSubmit" novalidate>
 
         <!-- Campo email -->
         <div class="field" :class="{ 'field--error': errors.email }">
@@ -52,7 +77,7 @@
               :type="showPassword ? 'text' : 'password'"
               class="field-input"
               placeholder="••••••••"
-              autocomplete="current-password"
+              :autocomplete="isRegister ? 'new-password' : 'current-password'"
               @blur="validatePassword"
             />
             <button
@@ -67,11 +92,25 @@
           <span v-if="errors.password" class="field-error">{{ errors.password }}</span>
         </div>
 
-        <!-- Credenciales de prueba -->
-        <div class="hint-box">
-          <span class="hint-label">Credenciales de prueba:</span>
-          <code>admin@vue.com</code> / <code>vue1234</code>
-        </div>
+        <!-- Confirmar contraseña (solo registro) -->
+        <Transition name="field-slide">
+          <div v-if="isRegister" class="field" :class="{ 'field--error': errors.confirm }">
+            <label for="confirm" class="field-label">Confirmar contraseña</label>
+            <div class="field-input-wrap">
+              <span class="field-icon">🔒</span>
+              <input
+                id="confirm"
+                v-model="form.confirm"
+                :type="showPassword ? 'text' : 'password'"
+                class="field-input"
+                placeholder="••••••••"
+                autocomplete="new-password"
+                @blur="validateConfirm"
+              />
+            </div>
+            <span v-if="errors.confirm" class="field-error">{{ errors.confirm }}</span>
+          </div>
+        </Transition>
 
         <!-- Botón submit -->
         <button
@@ -80,7 +119,9 @@
           :disabled="isLoading"
           :class="{ 'btn-submit--loading': isLoading }"
         >
-          <span v-if="!isLoading">Iniciar sesión →</span>
+          <span v-if="!isLoading">
+            {{ isRegister ? 'Crear cuenta →' : 'Iniciar sesión →' }}
+          </span>
           <span v-else class="spinner"></span>
         </button>
 
@@ -92,27 +133,37 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuth } from '@/composables/useAuth'
+import { useAuth } from '@/stores/auth'
 
 const router = useRouter()
-const { login } = useAuth()
+const authStore = useAuth()
+
+// ── Modo Login / Registro ──
+const isRegister = ref(false)
+
+function switchMode(toRegister) {
+  isRegister.value = toRegister
+  // Limpiar todo al cambiar de modo
+  form.email = ''
+  form.password = ''
+  form.confirm = ''
+  errors.email = ''
+  errors.password = ''
+  errors.confirm = ''
+  errorMsg.value = ''
+  successMsg.value = ''
+}
 
 // ── Estado del formulario ──
-const form = reactive({
-  email: '',
-  password: '',
-})
-
-const errors = reactive({
-  email: '',
-  password: '',
-})
+const form = reactive({ email: '', password: '', confirm: '' })
+const errors = reactive({ email: '', password: '', confirm: '' })
 
 const showPassword = ref(false)
 const isLoading = ref(false)
 const errorMsg = ref('')
+const successMsg = ref('')
 
-// ── Validaciones individuales ──
+// ── Validaciones ──
 function validateEmail() {
   if (!form.email) {
     errors.email = 'El correo es obligatorio.'
@@ -133,36 +184,49 @@ function validatePassword() {
   }
 }
 
+function validateConfirm() {
+  if (!form.confirm) {
+    errors.confirm = 'Confirma tu contraseña.'
+  } else if (form.confirm !== form.password) {
+    errors.confirm = 'Las contraseñas no coinciden.'
+  } else {
+    errors.confirm = ''
+  }
+}
+
 function isFormValid() {
   validateEmail()
   validatePassword()
-  return !errors.email && !errors.password
+  if (isRegister.value) validateConfirm()
+  return !errors.email && !errors.password && (!isRegister.value || !errors.confirm)
 }
 
-// ── Login simulado ──
-async function handleLogin() {
+// ── Submit ──
+async function handleSubmit() {
   errorMsg.value = ''
-
+  successMsg.value = ''
   if (!isFormValid()) return
 
   isLoading.value = true
-
   try {
-    // Simulamos una llamada a API con un delay
-    await new Promise(resolve => setTimeout(resolve, 1200))
-
-    // Credenciales de prueba
-    const FAKE_USER = { email: 'admin@vue.com', password: 'vue1234' }
-
-    if (form.email === FAKE_USER.email && form.password === FAKE_USER.password) {
-      // Login exitoso
-      login(
-        { name: 'Admin', email: form.email },
-        'fake-jwt-token-abc123'
-      )
-      await router.push('/dashboard')
+    if (isRegister.value) {
+      await authStore.register(form.email, form.password)
+      successMsg.value = 'Cuenta creada. Revisa tu correo para confirmar tu cuenta.'
+      switchMode(false)
     } else {
-      errorMsg.value = 'Credenciales incorrectas. Intenta de nuevo.'
+      await authStore.login(form.email, form.password)
+      await router.push('/dashboard')
+    }
+  } catch (err) {
+    const msg = err?.message ?? ''
+    if (msg.includes('Invalid login credentials')) {
+      errorMsg.value = 'Correo o contraseña incorrectos.'
+    } else if (msg.includes('User already registered')) {
+      errorMsg.value = 'Este correo ya está registrado.'
+    } else if (msg.includes('Email not confirmed')) {
+      errorMsg.value = 'Confirma tu correo antes de iniciar sesión.'
+    } else {
+      errorMsg.value = msg || 'Ocurrió un error. Intenta de nuevo.'
     }
   } finally {
     isLoading.value = false
@@ -182,7 +246,6 @@ async function handleLogin() {
   padding: 2rem 1rem;
 }
 
-/* Fondo decorativo */
 .bg-grid {
   position: absolute;
   inset: 0;
@@ -227,7 +290,7 @@ async function handleLogin() {
 /* ── HEADER ── */
 .card-header {
   text-align: center;
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.5rem;
 }
 
 .card-icon {
@@ -248,6 +311,7 @@ async function handleLogin() {
   font-weight: 700;
   letter-spacing: -0.03em;
   background: linear-gradient(135deg, #e8e4dc, #c8a96e);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin: 0 0 0.4rem;
@@ -259,11 +323,54 @@ async function handleLogin() {
   margin: 0;
 }
 
-/* ── ALERTA ── */
+/* ── TOGGLE ── */
+.mode-toggle {
+  display: flex;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 1.5rem;
+  gap: 4px;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #6b6560;
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.mode-btn--active {
+  background: linear-gradient(135deg, #c8a96e, #a0834e);
+  color: #0d0d0f;
+}
+
+/* ── ALERTAS ── */
 .alert-error {
   background: rgba(224, 112, 112, 0.1);
   border: 1px solid rgba(224, 112, 112, 0.3);
   color: #e07070;
+  border-radius: 8px;
+  padding: 0.65rem 1rem;
+  font-size: 0.88rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.alert-success {
+  background: rgba(112, 200, 130, 0.1);
+  border: 1px solid rgba(112, 200, 130, 0.3);
+  color: #70c882;
   border-radius: 8px;
   padding: 0.65rem 1rem;
   font-size: 0.88rem;
@@ -355,28 +462,13 @@ async function handleLogin() {
 
 .field-toggle:hover { opacity: 1; }
 
-/* ── HINT BOX ── */
-.hint-box {
-  background: rgba(200, 169, 110, 0.06);
-  border: 1px dashed rgba(200, 169, 110, 0.2);
-  border-radius: 8px;
-  padding: 0.65rem 0.9rem;
-  font-size: 0.8rem;
-  color: #7a7168;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.hint-label { color: #9a938c; }
-
-code {
-  background: rgba(200, 169, 110, 0.12);
-  color: #c8a96e;
-  padding: 0.1rem 0.4rem;
-  border-radius: 4px;
-  font-size: 0.8rem;
+/* ── Animación campo confirm ── */
+.field-slide-enter-active { transition: all 0.3s ease; }
+.field-slide-leave-active { transition: all 0.2s ease; }
+.field-slide-enter-from, .field-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+  max-height: 0;
 }
 
 /* ── BOTÓN SUBMIT ── */
@@ -405,7 +497,6 @@ code {
   cursor: not-allowed;
 }
 
-/* Spinner */
 .spinner {
   display: inline-block;
   width: 18px;
