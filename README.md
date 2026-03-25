@@ -1,38 +1,108 @@
-# rutas-protegidas
+# 🔐 Vue Auth App
 
-This template should help get you started developing with Vue 3 in Vite.
+Aplicación web de autenticación construida con Vue 3, Vite y Supabase. Incluye registro, inicio de sesión y rutas protegidas.
 
-## Recommended IDE Setup
+🌐 **Demo en vivo:** [gcota1694.github.io/vue-auth-app](https://gcota1694.github.io/vue-auth-app/)
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+---
 
-## Recommended Browser Setup
+## 🚀 Tecnologías utilizadas
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+- [Vue 3](https://vuejs.org/) — Framework de JavaScript progresivo
+- [Vite](https://vitejs.dev/) — Herramienta de build ultrarrápida
+- [Supabase](https://supabase.com/) — Backend como servicio (autenticación y base de datos)
+- [Vue Router](https://router.vuejs.org/) — Enrutamiento con rutas protegidas
+- [Pinia](https://pinia.vuejs.org/) — Manejo de estado global
 
-## Customize configuration
+---
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+## ✨ Funcionalidades
 
-## Project Setup
+- Registro de usuario con email y contraseña
+- Inicio de sesión
+- Cierre de sesión
+- Rutas protegidas (solo accesibles con sesión activa)
+- Redirección automática según estado de autenticación
 
-```sh
+---
+
+## 📦 Instalación local
+
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/Gcota1694/vue-auth-app.git
+cd vue-auth-app
+
+# 2. Instalar dependencias
 npm install
+
+# 3. Crear archivo de variables de entorno
+cp .env.example .env
 ```
 
-### Compile and Hot-Reload for Development
+Edita el archivo `.env` con tus credenciales de Supabase:
 
-```sh
+```env
+VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
+VITE_SUPABASE_ANON_KEY=tu-anon-key
+```
+
+```bash
+# 4. Correr en desarrollo
 npm run dev
 ```
 
-### Compile and Minify for Production
+---
 
-```sh
+## 🏗️ Build para producción
+
+```bash
 npm run build
 ```
+
+---
+
+## 🔑 Variables de entorno
+
+| Variable | Descripción |
+|---|---|
+| `VITE_SUPABASE_URL` | URL de tu proyecto en Supabase |
+| `VITE_SUPABASE_ANON_KEY` | Clave pública (anon key) de Supabase |
+
+> ⚠️ Nunca subas tu archivo `.env` al repositorio.
+
+---
+
+## 🚢 Despliegue en GitHub Pages
+
+El proyecto se despliega automáticamente con GitHub Actions al hacer push a `main`.
+
+Para configurarlo en tu propio fork, agrega los secrets en **Settings → Secrets and variables → Actions**:
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+
+---
+
+## 📁 Estructura del proyecto
+
+```
+src/
+├── components/       # Componentes reutilizables
+├── composables/      # Lógica reutilizable (useAuth)
+├── router/           # Configuración de rutas y guardas
+├── stores/           # Estado global con Pinia
+├── views/            # Vistas principales
+│   ├── AuthView.vue
+│   ├── HomeView.vue
+│   ├── DashboardView.vue
+│   └── NotFoundView.vue
+├── supabase.js       # Cliente de Supabase
+└── main.js           # Punto de entrada
+```
+
+---
+
+## 👤 Autor
+
+**Gabriel Alejo Cota** — [@Gcota1694](https://github.com/Gcota1694)
