@@ -7,7 +7,7 @@
       <div class="welcome-text">
         <p class="welcome-label">Panel de control</p>
         <h1 class="welcome-title">
-          Hola, <span class="highlight">{{ user?.name }}</span> 👋
+          Hola, <span class="highlight">{{ username }}</span> 👋
         </h1>
         <p class="welcome-sub">{{ currentDate }} — Todo en orden por aquí.</p>
       </div>
@@ -69,7 +69,7 @@
         <div class="session-info">
           <div class="session-row">
             <span class="session-key">Usuario</span>
-            <span class="session-val">{{ user?.name }}</span>
+            <span class="session-val">{{ username }}</span>
           </div>
           <div class="session-row">
             <span class="session-key">Email</span>
@@ -101,6 +101,11 @@ import { useAuth } from '@/composables/useAuth'
 
 const router = useRouter()
 const { user, logout } = useAuth()
+
+// ── Nombre completo del usuario ──
+const username = computed(() =>
+  user.value?.user_metadata?.full_name || user.value?.email || 'Usuario'
+)
 
 // ── Fecha actual formateada ──
 const currentDate = computed(() =>
@@ -137,8 +142,8 @@ const activity = [
 
 // ── Logout ──
 async function handleLogout() {
-  logout()
-  await router.push('/login')
+  await logout()
+  router.push('/login')
 }
 </script>
 

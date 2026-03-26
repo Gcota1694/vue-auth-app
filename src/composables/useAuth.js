@@ -1,31 +1,57 @@
 // src/composables/useAuth.js
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
+import { supabase } from '@/supabase'
 
-// Estado GLOBAL compartido (fuera del composable)
-const _user = ref(null)
-const _token = ref(localStorage.getItem('auth_token') || null)
+const user = ref(null)
+const loading = ref(false)
+
+// Cargar sesión al iniciar
+supabase.auth.getSession().then(({ data }) => {
+  user.value = data.session?.user ?? null
+})
+
+// Escuchar cambios de sesión
+supabase.auth.onAuthStateChange((event, session) => {
+  user.value = session?.user ?? null
+})
 
 export function useAuth() {
-  const isAuthenticated = computed(() => !!_token.value)
-
-  const user = computed(() => _user.value)
-
-  function login(userData, token) {
-    _user.value = userData
-    _token.value = token
-    localStorage.setItem('auth_token', token)
+  async function login(email, password) {
+    loading.value = true
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    loading.value = false
+    if (error) throw new Error('Credenciales incorrectas. Verifica tu correo y contraseña.')
+    user.value = data.user
   }
 
-  function logout() {
-    _user.value = null
-    _token.value = null
-    localStorage.removeItem('auth_token')
+  async function register(email, password, nombre, apellido) {
+    loading.value = true
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          nombre,
+          apellido,
+          full_name: `${nombre} ${apellido}`
+        }
+      }
+    })
+    loading.value = false
+    if (error) throw new Error(error.message)
+    user.value = data.user
+  }
+
+  async function logout() {
+    await supabase.auth.signOut()
+    user.value = null
   }
 
   return {
     user,
-    isAuthenticated,
+    loading,
     login,
+    register,
     logout,
   }
 }

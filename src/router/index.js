@@ -1,8 +1,8 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import { useAuth } from '@/stores/auth'
+import { useAuth } from '@/composables/useAuth'
 
 const HomeView      = () => import('@/views/HomeView.vue')
-const LoginView     = () => import('@/views/LoginView.vue')
+const LoginView     = () => import('@/views/AuthView.vue')
 const DashboardView = () => import('@/views/DashboardView.vue')
 const NotFoundView  = () => import('@/views/NotFoundView.vue')
 
@@ -43,15 +43,15 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  const { isAuthenticated } = useAuth()
+  const { user } = useAuth()
 
   document.title = `${to.meta.title ?? 'App'} | VueAuth`
 
-  if (to.meta.requiresAuth && !isAuthenticated.value) {
+  if (to.meta.requiresAuth && !user.value) {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
 
-  if (to.meta.guestOnly && isAuthenticated.value) {
+  if (to.meta.guestOnly && user.value) {
     return { name: 'dashboard' }
   }
 
