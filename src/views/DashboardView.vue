@@ -191,6 +191,7 @@ async function handleLogout() {
 
 .highlight {
   background: linear-gradient(135deg, #c8a96e, #e8d5a3);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }

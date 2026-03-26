@@ -2,7 +2,8 @@
 
 Aplicación web de autenticación construida con Vue 3, Vite y Supabase. Incluye registro, inicio de sesión y rutas protegidas.
 
-🌐 **Demo en vivo:** [gcota1694.github.io/vue-auth-app](https://gcota1694.github.io/vue-auth-app/)
+🌐 **GitHub Pages:** [gcota1694.github.io/vue-auth-app](https://gcota1694.github.io/vue-auth-app/)  
+▲ **Vercel:** [vue-auth-app-vh2b.vercel.app](https://vue-auth-app-vh2b.vercel.app/#/)
 
 ---
 
@@ -18,11 +19,12 @@ Aplicación web de autenticación construida con Vue 3, Vite y Supabase. Incluye
 
 ## ✨ Funcionalidades
 
-- Registro de usuario con email y contraseña
+- Registro de usuario con email, nombre y apellido
 - Inicio de sesión
 - Cierre de sesión
 - Rutas protegidas (solo accesibles con sesión activa)
 - Redirección automática según estado de autenticación
+- Bienvenida personalizada con nombre completo en el dashboard
 
 ---
 
@@ -73,14 +75,18 @@ npm run build
 
 ---
 
-## 🚢 Despliegue en GitHub Pages
+## 🚢 Despliegue
 
+### GitHub Pages
 El proyecto se despliega automáticamente con GitHub Actions al hacer push a `main`.
 
 Para configurarlo en tu propio fork, agrega los secrets en **Settings → Secrets and variables → Actions**:
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
+
+### Vercel
+Importa el repositorio en [vercel.com](https://vercel.com) y agrega las variables de entorno en **Settings → Environment Variables** antes de hacer deploy.
 
 ---
 
