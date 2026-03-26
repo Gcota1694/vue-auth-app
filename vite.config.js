@@ -5,9 +5,8 @@ import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import vueDevTools from 'vite-plugin-vue-devtools'
 
-// https://vite.dev/config/
 export default defineConfig({
-  base: '/vue-auth-app/',  
+  base: process.env.GITHUB_ACTIONS ? '/vue-auth-app/' : '/',
   plugins: [
     vue(),
     vueJsx(),
