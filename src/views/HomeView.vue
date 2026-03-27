@@ -272,6 +272,7 @@ const flowSteps = [
   font-style: normal;
   background: linear-gradient(135deg, #c8a96e, #e8d5a3);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 

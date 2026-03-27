@@ -8,9 +8,18 @@
         <p class="auth-sub">Escribe tu nueva contraseña</p>
       </div>
 
-      <div v-if="success" class="success-box">
+      <div v-if="sessionError" class="error-box">
+        ❌ El enlace es inválido o ha expirado. 
+        <router-link to="/forgot-password">Solicita uno nuevo</router-link>.
+      </div>
+
+      <div v-else-if="success" class="success-box">
         ✅ Contraseña actualizada. Ahora puedes
         <router-link to="/login">iniciar sesión</router-link>.
+      </div>
+
+      <div v-else-if="!sessionReady" class="loading-box">
+        Verificando enlace...
       </div>
 
       <form v-else class="auth-form" @submit.prevent="handleSubmit">
@@ -35,7 +44,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { supabase } from '@/supabase'
 import { useAuth } from '@/composables/useAuth'
 
 const { updatePassword, loading } = useAuth()
@@ -44,6 +54,40 @@ const password = ref('')
 const confirm = ref('')
 const errorMsg = ref('')
 const success = ref(false)
+const sessionReady = ref(false)
+const sessionError = ref(false)
+
+onMounted(async () => {
+  // El token viene en el hash de la URL: #access_token=...&type=recovery
+  const hash = window.location.hash
+
+  // Buscar en toda la URL incluyendo antes del # del router
+  const fullUrl = window.location.href
+  const tokenMatch = fullUrl.match(/access_token=([^&]+)/)
+  const refreshMatch = fullUrl.match(/refresh_token=([^&]+)/)
+  const typeMatch = fullUrl.match(/type=([^&]+)/)
+
+  if (tokenMatch && typeMatch && typeMatch[1] === 'recovery') {
+    const { error } = await supabase.auth.setSession({
+      access_token: tokenMatch[1],
+      refresh_token: refreshMatch ? refreshMatch[1] : '',
+    })
+
+    if (error) {
+      sessionError.value = true
+    } else {
+      sessionReady.value = true
+    }
+  } else {
+    // Intentar con la sesión existente
+    const { data } = await supabase.auth.getSession()
+    if (data.session) {
+      sessionReady.value = true
+    } else {
+      sessionError.value = true
+    }
+  }
+})
 
 async function handleSubmit() {
   errorMsg.value = ''
@@ -149,6 +193,28 @@ async function handleSubmit() {
 .success-box a {
   color: #c8a96e;
   text-decoration: underline;
+}
+
+.error-box {
+  background: rgba(224, 112, 112, 0.08);
+  border: 1px solid rgba(224, 112, 112, 0.25);
+  border-radius: 10px;
+  padding: 1rem;
+  color: #e07070;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.error-box a {
+  color: #c8a96e;
+  text-decoration: underline;
+}
+
+.loading-box {
+  text-align: center;
+  color: #5a5550;
+  font-size: 0.9rem;
+  padding: 1rem;
 }
 
 .auth-error {
