@@ -1,46 +1,67 @@
 <template>
   <div class="auth-wrapper">
     <div class="auth-card">
-      <div class="auth-header">
-        <span class="auth-logo">⬡</span>
-        <h1 class="auth-title">{{ isLogin ? 'Iniciar sesión' : 'Crear cuenta' }}</h1>
-        <p class="auth-sub">{{ isLogin ? 'Bienvenido de nuevo' : 'Regístrate para continuar' }}</p>
+
+      <!-- MENSAJE DE CONFIRMACIÓN TRAS REGISTRO -->
+      <div v-if="confirmationSent" class="success-box">
+        <span class="success-icon">📧</span>
+        <h2 class="success-title">Revisa tu correo</h2>
+        <p class="success-msg">
+          Te enviamos un enlace de confirmación a <strong>{{ emailSent }}</strong>.
+          Confirma tu cuenta para poder iniciar sesión.
+        </p>
+        <button class="btn-submit" @click="confirmationSent = false">
+          Volver al inicio de sesión
+        </button>
       </div>
 
-      <form class="auth-form" @submit.prevent="handleSubmit">
+      <template v-else>
+        <div class="auth-header">
+          <span class="auth-logo">⬡</span>
+          <h1 class="auth-title">{{ isLogin ? 'Iniciar sesión' : 'Crear cuenta' }}</h1>
+          <p class="auth-sub">{{ isLogin ? 'Bienvenido de nuevo' : 'Regístrate para continuar' }}</p>
+        </div>
 
-        <div v-if="!isLogin" class="form-row">
-          <div class="form-group">
-            <label>Nombre</label>
-            <input v-model="nombre" type="text" required />
+        <form class="auth-form" @submit.prevent="handleSubmit">
+
+          <div v-if="!isLogin" class="form-row">
+            <div class="form-group">
+              <label>Nombre</label>
+              <input v-model="nombre" type="text" required />
+            </div>
+            <div class="form-group">
+              <label>Apellido</label>
+              <input v-model="apellido" type="text" required />
+            </div>
           </div>
+
           <div class="form-group">
-            <label>Apellido</label>
-            <input v-model="apellido" type="text" required />
+            <label>Correo electrónico</label>
+            <input v-model="email" type="email" required />
           </div>
-        </div>
 
-        <div class="form-group">
-          <label>Correo electrónico</label>
-          <input v-model="email" type="email" required />
-        </div>
+          <div class="form-group">
+            <label>Contraseña</label>
+            <input v-model="password" type="password" required />
+          </div>
 
-        <div class="form-group">
-          <label>Contraseña</label>
-          <input v-model="password" type="password" required />
-        </div>
+          <div v-if="isLogin" class="forgot-link">
+            <router-link to="/forgot-password">¿Olvidaste tu contraseña?</router-link>
+          </div>
 
-        <p v-if="errorMsg" class="auth-error">{{ errorMsg }}</p>
+          <p v-if="errorMsg" class="auth-error">{{ errorMsg }}</p>
 
-        <button type="submit" class="btn-submit" :disabled="loading">
-          {{ loading ? 'Cargando...' : isLogin ? 'Entrar' : 'Registrarse' }}
-        </button>
-      </form>
+          <button type="submit" class="btn-submit" :disabled="loading">
+            {{ loading ? 'Cargando...' : isLogin ? 'Entrar' : 'Registrarse' }}
+          </button>
+        </form>
 
-      <p class="auth-toggle">
-        {{ isLogin ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?' }}
-        <button @click="toggleMode">{{ isLogin ? 'Regístrate' : 'Inicia sesión' }}</button>
-      </p>
+        <p class="auth-toggle">
+          {{ isLogin ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?' }}
+          <button @click="toggleMode">{{ isLogin ? 'Regístrate' : 'Inicia sesión' }}</button>
+        </p>
+      </template>
+
     </div>
   </div>
 </template>
@@ -59,6 +80,8 @@ const password = ref('')
 const nombre = ref('')
 const apellido = ref('')
 const errorMsg = ref('')
+const confirmationSent = ref(false)
+const emailSent = ref('')
 
 function toggleMode() {
   isLogin.value = !isLogin.value
@@ -70,10 +93,12 @@ async function handleSubmit() {
   try {
     if (isLogin.value) {
       await login(email.value, password.value)
+      router.push('/dashboard')
     } else {
       await register(email.value, password.value, nombre.value, apellido.value)
+      emailSent.value = email.value
+      confirmationSent.value = true
     }
-    router.push('/dashboard')
   } catch (e) {
     errorMsg.value = e.message
   }
@@ -163,6 +188,17 @@ async function handleSubmit() {
   border-color: rgba(200, 169, 110, 0.4);
 }
 
+.forgot-link {
+  text-align: right;
+  margin-top: -0.4rem;
+}
+
+.forgot-link a {
+  font-size: 0.82rem;
+  color: #c8a96e;
+  text-decoration: underline;
+}
+
 .auth-error {
   color: #e07070;
   font-size: 0.85rem;
@@ -181,6 +217,7 @@ async function handleSubmit() {
   cursor: pointer;
   transition: opacity 0.2s, transform 0.15s;
   margin-top: 0.5rem;
+  width: 100%;
 }
 
 .btn-submit:hover:not(:disabled) {
@@ -210,5 +247,36 @@ async function handleSubmit() {
   font-family: inherit;
   margin-left: 0.3rem;
   text-decoration: underline;
+}
+
+/* ── CONFIRMACIÓN ── */
+.success-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+}
+
+.success-icon {
+  font-size: 3rem;
+}
+
+.success-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #e8e4dc;
+  margin: 0;
+}
+
+.success-msg {
+  color: #8a8480;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.success-msg strong {
+  color: #c8a96e;
 }
 </style>

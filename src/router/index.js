@@ -1,10 +1,12 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 
-const HomeView      = () => import('@/views/HomeView.vue')
-const LoginView     = () => import('@/views/AuthView.vue')
-const DashboardView = () => import('@/views/DashboardView.vue')
-const NotFoundView  = () => import('@/views/NotFoundView.vue')
+const HomeView             = () => import('@/views/HomeView.vue')
+const LoginView            = () => import('@/views/AuthView.vue')
+const DashboardView        = () => import('@/views/DashboardView.vue')
+const ForgotPasswordView   = () => import('@/views/Forgotpasswordview.vue')
+const ResetPasswordView    = () => import('@/views/Resetpasswordview.vue')
+const NotFoundView         = () => import('@/views/NotFoundView.vue')
 
 const routes = [
   {
@@ -18,6 +20,18 @@ const routes = [
     name: 'login',
     component: LoginView,
     meta: { title: 'Iniciar sesión', requiresAuth: false, guestOnly: true },
+  },
+  {
+    path: '/forgot-password',
+    name: 'forgot-password',
+    component: ForgotPasswordView,
+    meta: { title: 'Recuperar contraseña', requiresAuth: false },
+  },
+  {
+    path: '/reset-password',
+    name: 'reset-password',
+    component: ResetPasswordView,
+    meta: { title: 'Nueva contraseña', requiresAuth: false },
   },
   {
     path: '/dashboard',
