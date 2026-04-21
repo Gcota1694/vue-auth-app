@@ -14,8 +14,7 @@
       </div>
 
       <div v-else-if="success" class="success-box">
-        ✅ Contraseña actualizada. Ahora puedes
-        <router-link to="/login">iniciar sesión</router-link>.
+        ✅ Contraseña actualizada. Redirigiendo...
       </div>
 
       <div v-else-if="!sessionReady" class="loading-box">
@@ -45,10 +44,12 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase'
 import { useAuth } from '@/composables/useAuth'
 
 const { updatePassword, loading } = useAuth()
+const router = useRouter()
 
 const password     = ref('')
 const confirm      = ref('')
@@ -69,14 +70,12 @@ onMounted(async () => {
 
   authListener = subscription
 
-  // Fallback: si la sesión ya estaba activa antes de montar el componente
   const { data } = await supabase.auth.getSession()
   if (data.session && !sessionReady.value) {
     sessionReady.value = true
     return
   }
 
-  // Si después de 4 segundos no hay sesión, mostrar error
   setTimeout(() => {
     if (!sessionReady.value) {
       sessionError.value = true
@@ -97,6 +96,10 @@ async function handleSubmit() {
   try {
     await updatePassword(password.value)
     success.value = true
+    // replace elimina /reset-password del historial, el botón atrás no puede volver
+    setTimeout(() => {
+      router.replace({ name: 'dashboard' })
+    }, 2000)
   } catch (e) {
     errorMsg.value = e.message
   }
