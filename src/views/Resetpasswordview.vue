@@ -9,7 +9,7 @@
       </div>
 
       <div v-if="sessionError" class="error-box">
-        ❌ El enlace es inválido o ha expirado. 
+        ❌ El enlace es inválido o ha expirado.
         <router-link to="/forgot-password">Solicita uno nuevo</router-link>.
       </div>
 
@@ -44,49 +44,52 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { supabase } from '@/supabase'
 import { useAuth } from '@/composables/useAuth'
 
 const { updatePassword, loading } = useAuth()
 
-const password = ref('')
-const confirm = ref('')
-const errorMsg = ref('')
-const success = ref(false)
+const password    = ref('')
+const confirm     = ref('')
+const errorMsg    = ref('')
+const success     = ref(false)
 const sessionReady = ref(false)
 const sessionError = ref(false)
 
+let authListener = null
+
 onMounted(async () => {
-  // El token viene en el hash de la URL: #access_token=...&type=recovery
-  const hash = window.location.hash
-
-  // Buscar en toda la URL incluyendo antes del # del router
-  const fullUrl = window.location.href
-  const tokenMatch = fullUrl.match(/access_token=([^&]+)/)
-  const refreshMatch = fullUrl.match(/refresh_token=([^&]+)/)
-  const typeMatch = fullUrl.match(/type=([^&]+)/)
-
-  if (tokenMatch && typeMatch && typeMatch[1] === 'recovery') {
-    const { error } = await supabase.auth.setSession({
-      access_token: tokenMatch[1],
-      refresh_token: refreshMatch ? refreshMatch[1] : '',
-    })
-
-    if (error) {
-      sessionError.value = true
-    } else {
+  // Supabase v2 detecta automáticamente el token del hash y dispara
+  // el evento PASSWORD_RECOVERY — es la forma más confiable de manejarlo.
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'PASSWORD_RECOVERY' && session) {
       sessionReady.value = true
+      sessionError.value = false
     }
-  } else {
-    // Intentar con la sesión existente
-    const { data } = await supabase.auth.getSession()
-    if (data.session) {
-      sessionReady.value = true
-    } else {
-      sessionError.value = true
-    }
+  })
+
+  authListener = subscription
+
+  // Fallback: si el token ya fue procesado antes de que el listener
+  // se registrara, verificamos si ya existe una sesión activa.
+  const { data } = await supabase.auth.getSession()
+  if (data.session && !sessionReady.value) {
+    sessionReady.value = true
+    return
   }
+
+  // Si después de 4 segundos no hay sesión, mostramos error
+  setTimeout(() => {
+    if (!sessionReady.value) {
+      sessionError.value = true
+    }
+  }, 4000)
+})
+
+onUnmounted(() => {
+  // Limpiar el listener cuando el componente se desmonta
+  authListener?.unsubscribe()
 })
 
 async function handleSubmit() {

@@ -1,13 +1,13 @@
-import { createRouter, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
-
+ 
 const HomeView             = () => import('@/views/HomeView.vue')
 const LoginView            = () => import('@/views/AuthView.vue')
 const DashboardView        = () => import('@/views/DashboardView.vue')
 const ForgotPasswordView   = () => import('@/views/Forgotpasswordview.vue')
 const ResetPasswordView    = () => import('@/views/Resetpasswordview.vue')
 const NotFoundView         = () => import('@/views/NotFoundView.vue')
-
+ 
 const routes = [
   {
     path: '/',
@@ -46,30 +46,31 @@ const routes = [
     meta: { title: 'Página no encontrada' },
   },
 ]
-
+ 
 const router = createRouter({
-  history: createWebHashHistory(import.meta.env.BASE_URL),
+  
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes,
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) return savedPosition
     return { top: 0, behavior: 'smooth' }
   },
 })
-
+ 
 router.beforeEach((to) => {
   const { user } = useAuth()
-
+ 
   document.title = `${to.meta.title ?? 'App'} | VueAuth`
-
+ 
   if (to.meta.requiresAuth && !user.value) {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
-
+ 
   if (to.meta.guestOnly && user.value) {
     return { name: 'dashboard' }
   }
-
+ 
   return true
 })
-
+ 
 export default router
