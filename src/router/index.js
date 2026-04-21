@@ -1,12 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 
-const HomeView             = () => import('@/views/HomeView.vue')
-const LoginView            = () => import('@/views/AuthView.vue')
-const DashboardView        = () => import('@/views/DashboardView.vue')
-const ForgotPasswordView   = () => import('@/views/Forgotpasswordview.vue')
-const ResetPasswordView    = () => import('@/views/Resetpasswordview.vue')
-const NotFoundView         = () => import('@/views/NotFoundView.vue')
+const HomeView           = () => import('@/views/HomeView.vue')
+const LoginView          = () => import('@/views/AuthView.vue')
+const DashboardView      = () => import('@/views/DashboardView.vue')
+const ForgotPasswordView = () => import('@/views/Forgotpasswordview.vue')
+const ResetPasswordView  = () => import('@/views/Resetpasswordview.vue')
+const NotFoundView       = () => import('@/views/NotFoundView.vue')
 
 const routes = [
   {
@@ -60,6 +60,11 @@ router.beforeEach((to) => {
   const { user } = useAuth()
 
   document.title = `${to.meta.title ?? 'App'} | VueAuth`
+
+ 
+  if (to.name === 'reset-password' && user.value && !window.location.hash.includes('access_token')) {
+    return { name: 'dashboard' }
+  }
 
   if (to.meta.requiresAuth && !user.value) {
     return { name: 'login', query: { redirect: to.fullPath } }
