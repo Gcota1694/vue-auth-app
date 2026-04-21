@@ -62,7 +62,8 @@ export function useAuth() {
   async function resetPassword(email) {
     loading.value = true
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}${window.location.pathname}#/reset-password`,
+      // ✅ Corregido: history mode ya no necesita el # en la URL
+      redirectTo: `${window.location.origin}/reset-password`,
     })
     loading.value = false
     if (error) throw new Error(error.message)
