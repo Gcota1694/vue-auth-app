@@ -50,18 +50,16 @@ import { useAuth } from '@/composables/useAuth'
 
 const { updatePassword, loading } = useAuth()
 
-const password    = ref('')
-const confirm     = ref('')
-const errorMsg    = ref('')
-const success     = ref(false)
+const password     = ref('')
+const confirm      = ref('')
+const errorMsg     = ref('')
+const success      = ref(false)
 const sessionReady = ref(false)
 const sessionError = ref(false)
 
 let authListener = null
 
 onMounted(async () => {
-  // Supabase v2 detecta automáticamente el token del hash y dispara
-  // el evento PASSWORD_RECOVERY — es la forma más confiable de manejarlo.
   const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
     if (event === 'PASSWORD_RECOVERY' && session) {
       sessionReady.value = true
@@ -71,15 +69,14 @@ onMounted(async () => {
 
   authListener = subscription
 
-  // Fallback: si el token ya fue procesado antes de que el listener
-  // se registrara, verificamos si ya existe una sesión activa.
+  // Fallback: si la sesión ya estaba activa antes de montar el componente
   const { data } = await supabase.auth.getSession()
   if (data.session && !sessionReady.value) {
     sessionReady.value = true
     return
   }
 
-  // Si después de 4 segundos no hay sesión, mostramos error
+  // Si después de 4 segundos no hay sesión, mostrar error
   setTimeout(() => {
     if (!sessionReady.value) {
       sessionError.value = true
@@ -88,7 +85,6 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  // Limpiar el listener cuando el componente se desmonta
   authListener?.unsubscribe()
 })
 

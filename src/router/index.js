@@ -1,76 +1,85 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import { useAuth } from '@/composables/useAuth'
- 
-const HomeView             = () => import('@/views/HomeView.vue')
-const LoginView            = () => import('@/views/AuthView.vue')
-const DashboardView        = () => import('@/views/DashboardView.vue')
-const ForgotPasswordView   = () => import('@/views/Forgotpasswordview.vue')
-const ResetPasswordView    = () => import('@/views/Resetpasswordview.vue')
-const NotFoundView         = () => import('@/views/NotFoundView.vue')
- 
-const routes = [
-  {
-    path: '/',
-    name: 'home',
-    component: HomeView,
-    meta: { title: 'Inicio', requiresAuth: false },
-  },
-  {
-    path: '/login',
-    name: 'login',
-    component: LoginView,
-    meta: { title: 'Iniciar sesión', requiresAuth: false, guestOnly: true },
-  },
-  {
-    path: '/forgot-password',
-    name: 'forgot-password',
-    component: ForgotPasswordView,
-    meta: { title: 'Recuperar contraseña', requiresAuth: false },
-  },
-  {
-    path: '/reset-password',
-    name: 'reset-password',
-    component: ResetPasswordView,
-    meta: { title: 'Nueva contraseña', requiresAuth: false },
-  },
-  {
-    path: '/dashboard',
-    name: 'dashboard',
-    component: DashboardView,
-    meta: { title: 'Dashboard', requiresAuth: true },
-  },
-  {
-    path: '/:pathMatch(.*)*',
-    name: 'not-found',
-    component: NotFoundView,
-    meta: { title: 'Página no encontrada' },
-  },
-]
- 
-const router = createRouter({
-  
-  history: createWebHistory(import.meta.env.BASE_URL),
-  routes,
-  scrollBehavior(to, from, savedPosition) {
-    if (savedPosition) return savedPosition
-    return { top: 0, behavior: 'smooth' }
-  },
+// src/composables/useAuth.js
+import { ref } from 'vue'
+import { supabase } from '@/supabase'
+
+const user = ref(null)
+const loading = ref(false)
+
+// Cargar sesión al iniciar
+supabase.auth.getSession().then(({ data }) => {
+  user.value = data.session?.user ?? null
 })
- 
-router.beforeEach((to) => {
-  const { user } = useAuth()
- 
-  document.title = `${to.meta.title ?? 'App'} | VueAuth`
- 
-  if (to.meta.requiresAuth && !user.value) {
-    return { name: 'login', query: { redirect: to.fullPath } }
-  }
- 
-  if (to.meta.guestOnly && user.value) {
-    return { name: 'dashboard' }
-  }
- 
-  return true
+
+// Escuchar cambios de sesión
+supabase.auth.onAuthStateChange((event, session) => {
+  user.value = session?.user ?? null
 })
- 
-export default router
+
+export function useAuth() {
+  async function login(email, password) {
+    loading.value = true
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    loading.value = false
+
+    if (error) throw new Error('Credenciales incorrectas. Verifica tu correo y contraseña.')
+
+    if (!data.user.email_confirmed_at) {
+      await supabase.auth.signOut()
+      user.value = null
+      throw new Error('Debes confirmar tu correo electrónico antes de iniciar sesión. Revisa tu bandeja de entrada.')
+    }
+
+    user.value = data.user
+  }
+
+  async function register(email, password, nombre, apellido) {
+    loading.value = true
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          nombre,
+          apellido,
+          full_name: `${nombre} ${apellido}`
+        }
+      }
+    })
+    loading.value = false
+    if (error) throw new Error(error.message)
+
+    user.value = null
+    return { needsConfirmation: true }
+  }
+
+  async function logout() {
+    await supabase.auth.signOut()
+    user.value = null
+  }
+
+  async function resetPassword(email) {
+    loading.value = true
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    loading.value = false
+    if (error) throw new Error(error.message)
+  }
+
+  async function updatePassword(newPassword) {
+    loading.value = true
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    loading.value = false
+    if (error) throw new Error(error.message)
+  }
+
+  return {
+    user,
+    loading,
+    login,
+    register,
+    logout,
+    resetPassword,
+    updatePassword,
+  }
+}
